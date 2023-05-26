@@ -2,21 +2,26 @@ package traefik_log_elasticsearch
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/google/uuid"
 )
 
 type Config struct {
-	ElasticsearchURL string `json:"elasticsearchURL,omitempty"`
-	IndexName        string `json:"indexName,omitempty"`
-	Message          string `json:"message,omitempty"`
+	ElasticsearchURL string
+	IndexName        string
+	Message          string
+	APIKey           string
+	Username         string
+	Password         string
 }
 
 func CreateConfig() *Config {
@@ -24,11 +29,14 @@ func CreateConfig() *Config {
 }
 
 type ElasticsearchLog struct {
-	next             http.Handler
-	name             string
-	message          string
-	elasticsearchURL string
-	indexName        string
+	Next             http.Handler
+	Name             string
+	Message          string
+	ElasticsearchURL string
+	IndexName        string
+	APIKey           string
+	Username         string
+	Password         string
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
@@ -42,27 +50,62 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		return nil, errors.New("missing Elasticsearch message")
 	}
 	return &ElasticsearchLog{
-		elasticsearchURL: config.ElasticsearchURL,
-		indexName:        config.IndexName,
-		next:             next,
-		name:             name,
+		ElasticsearchURL: config.ElasticsearchURL,
+		IndexName:        config.IndexName,
+		Next:             next,
+		Name:             name,
+		Username:         config.Username,
+		Password:         config.Password,
+		APIKey:           config.APIKey,
 	}, nil
 }
 
-func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	// Create a client
-	es, _ := elasticsearch.NewDefaultClient()
+func convertToJSON(data map[string]interface{}) string {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return string(jsonData)
+}
 
-	// Set up the request object directly
-	req = esapi.IndexRequest{
-		Index:      e.indexName,
-		DocumentID: strconv.Itoa(1),
-		Body:       strings.NewReader(e.message),
+func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+
+	// Create a TLS config that skips certificate verification.
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+
+	// Create a transport to use our TLS config.
+	transport := &http.Transport{TLSClientConfig: tlsConfig}
+
+	cfg := elasticsearch.Config{
+		Addresses: []string{
+			e.ElasticsearchURL,
+		},
+		Transport: transport,
+		Username:  e.Username,
+		Password:  e.Password,
+	}
+	// Create a client
+	es, err := elasticsearch.NewClient(cfg)
+	if err != nil {
+		log.Fatalf("Error creating the client: %s", err)
+	}
+
+	id := uuid.New().String()
+
+	msg := map[string]interface{}{
+		"message": e.Message,
+	}
+
+	// Set up the Elasticsearch request object directly
+	esReq := esapi.IndexRequest{
+		Index:      e.IndexName,
+		DocumentID: id,
+		Body:       strings.NewReader(convertToJSON(msg)),
 		Refresh:    "true",
 	}
 
-	// Perform the request with the client.
-	res, err := req.Do(context.Background(), es)
+	res, err := esReq.Do(context.Background(), es)
+
 	if err != nil {
 		log.Fatalf("Error getting response: %s", err)
 	}
@@ -70,6 +113,7 @@ func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 
 	if res.IsError() {
 		log.Printf("[%s] Error indexing document ID=%d", res.Status(), 1)
+		log.Printf("%d", res.StatusCode)
 	} else {
 		// Deserialize the response into a map.
 		var r map[string]interface{}
@@ -81,5 +125,5 @@ func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 		}
 	}
 
-	e.next.ServeHTTP(rw, req)
+	e.Next.ServeHTTP(rw, req)
 }

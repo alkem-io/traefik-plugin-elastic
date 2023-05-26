@@ -1,44 +1,63 @@
 package traefik_log_elasticsearch_test
 
 import (
-	"context"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
-	"github.com/cmdbg/traefik_log_elasticsearch"
+	"github.com/joho/godotenv"
+
+	traefik_log_elasticsearch "github.com/cmdbg/traefik-log-elasticsearch-plugin"
 )
 
 func TestLogElasticsearch(t *testing.T) {
+	err := godotenv.Load(".env") // load .env file
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
 	cfg := traefik_log_elasticsearch.CreateConfig()
-	cfg.Message = ""
-	cfg.ElasticsearchURL = ""
-	cfg.IndexName = ""
+	cfg.Message = "Test Elasticsearch"
+	cfg.ElasticsearchURL = os.Getenv("ELASTICSEARCH_URL")
+	cfg.IndexName = os.Getenv("INDEX_NAME")
+	cfg.Username = os.Getenv("ELASTIC_USERNAME")
+	cfg.Password = os.Getenv("ELASTIC_PASSWORD")
 
-	ctx := context.Background()
-	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("next handler"))
+	})
 
-	handler, err := traefik_log_elasticsearch.New(ctx, next, cfg, "traefik-log-elasticsearch-plugin")
-	if err != nil {
-		t.Fatal(err)
+	elasticsearchLog := &traefik_log_elasticsearch.ElasticsearchLog{
+		Next:             next,
+		Name:             "test",
+		Message:          cfg.Message,
+		ElasticsearchURL: cfg.ElasticsearchURL,
+		IndexName:        cfg.IndexName,
+		Username:         cfg.Username,
+		Password:         cfg.Password,
 	}
 
-	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "http://test.com/foo", nil)
+	w := httptest.NewRecorder()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost", nil)
-	if err != nil {
-		t.Fatal(err)
+	elasticsearchLog.ServeHTTP(w, req)
+
+	resp := w.Result()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
 	}
 
-	handler.ServeHTTP(recorder, req)
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		t.Fatalf("Could not read response: %v", err)
+	}
 
-	assertHeader(t, req, "X-Host", "localhost")
-}
-
-func assertHeader(t *testing.T, req *http.Request, key, expected string) {
-	t.Helper()
-
-	if req.Header.Get(key) != expected {
-		t.Errorf("invalid header value: %s", req.Header.Get(key))
+	if string(body) != "next handler" {
+		t.Errorf("Handler did not chain to the next middleware. Got: %s", body)
 	}
 }
