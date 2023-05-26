@@ -1,4 +1,4 @@
-package plugindemo_test
+package traefik_log_elasticsearch_test
 
 import (
 	"context"
@@ -6,21 +6,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/traefik/plugindemo"
+	"github.com/cmdbg/traefik_log_elasticsearch"
 )
 
-func TestDemo(t *testing.T) {
-	cfg := plugindemo.CreateConfig()
-	cfg.Headers["X-Host"] = "[[.Host]]"
-	cfg.Headers["X-Method"] = "[[.Method]]"
-	cfg.Headers["X-URL"] = "[[.URL]]"
-	cfg.Headers["X-URL"] = "[[.URL]]"
-	cfg.Headers["X-Demo"] = "test"
+func TestLogElasticsearch(t *testing.T) {
+	cfg := traefik_log_elasticsearch.CreateConfig()
+	cfg.Message = ""
+	cfg.ElasticsearchURL = ""
+	cfg.IndexName = ""
 
 	ctx := context.Background()
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
 
-	handler, err := plugindemo.New(ctx, next, cfg, "demo-plugin")
+	handler, err := traefik_log_elasticsearch.New(ctx, next, cfg, "traefik-log-elasticsearch-plugin")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,9 +33,6 @@ func TestDemo(t *testing.T) {
 	handler.ServeHTTP(recorder, req)
 
 	assertHeader(t, req, "X-Host", "localhost")
-	assertHeader(t, req, "X-URL", "http://localhost")
-	assertHeader(t, req, "X-Method", "GET")
-	assertHeader(t, req, "X-Demo", "test")
 }
 
 func assertHeader(t *testing.T, req *http.Request, key, expected string) {

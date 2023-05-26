@@ -1,12 +1,13 @@
-displayName: Demo Plugin
+displayName: Traefik plugin middleware for logging custom messages to a configurable elasticsearch endpoint and index
 type: middleware
 iconPath: .assets/icon.png
 
-import: github.com/traefik/plugindemo
+import: github.com/cmdbg/traefik-log-elasticsearch-plugin
 
-summary: '[Demo] Add Request Header'
+summary: 'Log a message to elasticsearch'
 
 testData:
   Headers:
-    X-Demo: test
-    X-URL: '{{URL}}'
+    ElasticsearchURL: test
+    Message: 
+    IndexName: 
