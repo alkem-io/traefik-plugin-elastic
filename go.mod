@@ -8,6 +8,4 @@ require (
 	github.com/joho/godotenv v1.5.1
 )
 
-require (
-	github.com/elastic/elastic-transport-go/v8 v8.2.0 // indirect
-)
+require github.com/elastic/elastic-transport-go/v8 v8.2.0 // indirect
