@@ -25,6 +25,7 @@ func TestLogElasticsearch(t *testing.T) {
 	cfg.IndexName = os.Getenv("INDEX_NAME")
 	cfg.Username = os.Getenv("ELASTIC_USERNAME")
 	cfg.Password = os.Getenv("ELASTIC_PASSWORD")
+	cfg.VerifyTLS = true
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("next handler"))
@@ -38,6 +39,7 @@ func TestLogElasticsearch(t *testing.T) {
 		IndexName:        cfg.IndexName,
 		Username:         cfg.Username,
 		Password:         cfg.Password,
+		VerifyTLS:        cfg.VerifyTLS,
 	}
 
 	req := httptest.NewRequest("GET", "http://test.com/foo", nil)

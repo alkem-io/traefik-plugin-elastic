@@ -22,6 +22,7 @@ type Config struct {
 	APIKey           string
 	Username         string
 	Password         string
+	VerifyTLS        bool
 }
 
 func CreateConfig() *Config {
@@ -37,6 +38,7 @@ type ElasticsearchLog struct {
 	APIKey           string
 	Username         string
 	Password         string
+	VerifyTLS        bool
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
@@ -49,7 +51,11 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if len(config.Message) == 0 {
 		return nil, errors.New("missing Elasticsearch message")
 	}
-	return &ElasticsearchLog{
+	if (len(config.APIKey) == 0) && (len(config.Username) == 0 || len(config.Password) == 0) {
+		return nil, errors.New("missing Elasticsearch credentials")
+	}
+
+	elasticsearchLog := &ElasticsearchLog{
 		ElasticsearchURL: config.ElasticsearchURL,
 		IndexName:        config.IndexName,
 		Next:             next,
@@ -57,7 +63,10 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		Username:         config.Username,
 		Password:         config.Password,
 		APIKey:           config.APIKey,
-	}, nil
+		VerifyTLS:        config.VerifyTLS,
+	}
+
+	return elasticsearchLog, nil
 }
 
 func convertToJSON(data map[string]interface{}) string {
@@ -70,20 +79,34 @@ func convertToJSON(data map[string]interface{}) string {
 
 func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
-	// Create a TLS config that skips certificate verification.
-	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	var cfg elasticsearch.Config
+	if !e.VerifyTLS {
+		// Create a TLS config that skips certificate verification.
+		tlsConfig := &tls.Config{InsecureSkipVerify: true}
 
-	// Create a transport to use our TLS config.
-	transport := &http.Transport{TLSClientConfig: tlsConfig}
+		// Create a transport to use our TLS config.
+		transport := &http.Transport{TLSClientConfig: tlsConfig}
 
-	cfg := elasticsearch.Config{
-		Addresses: []string{
-			e.ElasticsearchURL,
-		},
-		Transport: transport,
-		Username:  e.Username,
-		Password:  e.Password,
+		cfg = elasticsearch.Config{
+			Addresses: []string{
+				e.ElasticsearchURL,
+			},
+			Transport: transport,
+			Username:  e.Username,
+			Password:  e.Password,
+			APIKey:    e.APIKey,
+		}
+	} else {
+		cfg = elasticsearch.Config{
+			Addresses: []string{
+				e.ElasticsearchURL,
+			},
+			Username: e.Username,
+			Password: e.Password,
+			APIKey:   e.APIKey,
+		}
 	}
+
 	// Create a client
 	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {

@@ -7,7 +7,11 @@ import: github.com/cmdbg/traefik-log-elasticsearch-plugin
 summary: 'Log a message to elasticsearch'
 
 testData:
-  Headers:
-    ElasticsearchURL: test
-    Message: 
-    IndexName: 
+  ElasticsearchURL: http://localhost:9200
+  Message: Test Elasticsearch
+  IndexName: test-index
+  VerifyTLS: false
+  Username: elastic
+  Password: elastic_user_password
+  APIKey: api_key
+
