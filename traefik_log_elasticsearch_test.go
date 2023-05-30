@@ -1,4 +1,7 @@
-package traefik_log_elasticsearch_test
+//go:build !generated
+// +build !generated
+
+package traefiklogelasticsearch_test
 
 import (
 	"fmt"
@@ -10,11 +13,11 @@ import (
 
 	"github.com/joho/godotenv"
 
-	traefik_log_elasticsearch "github.com/cmdbg/traefik-log-elasticsearch-plugin"
+	traefiklogelasticsearch "github.com/cmdbg/traefik-log-elasticsearch-plugin"
 )
 
 func TestLogElasticsearch(t *testing.T) {
-	cfg := traefik_log_elasticsearch.CreateConfig()
+	cfg := traefiklogelasticsearch.CreateConfig()
 	cfg.Message = "Test Elasticsearch"
 	cfg.ElasticsearchURL = "http://localhost:9200"
 	cfg.IndexName = "test-index"
@@ -36,7 +39,7 @@ func TestLogElasticsearch(t *testing.T) {
 		}
 	})
 
-	elasticsearchLog := &traefik_log_elasticsearch.ElasticsearchLog{
+	elasticsearchLog := &traefiklogelasticsearch.ElasticsearchLog{
 		Next:             next,
 		Name:             "test",
 		Message:          cfg.Message,

@@ -1,6 +1,9 @@
-// Package traefik_log_elasticsearch provides a Traefik middleware plugin
+//go:build !generated
+// +build !generated
+
+// Package traefiklogelasticsearch provides a Traefik middleware plugin
 // that logs HTTP request details to an Elasticsearch instance.
-package traefik_log_elasticsearch
+package traefiklogelasticsearch
 
 import (
 	"context"
@@ -112,7 +115,7 @@ func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 		tlsConfig := &tls.Config{InsecureSkipVerify: true}
 
 		// Create a transport to use our TLS config.
-		transport := &http.Transport{TLSClientConfig: tlsConfig}
+		transport := &http.Transport{TLSClientConfig: tlsConfig} //nolint:gosec
 
 		cfg = elasticsearch.Config{
 			Addresses: []string{
