@@ -250,9 +250,9 @@ func (r *GetModelSnapshotUpgradeStats) SnapshotId(v string) *GetModelSnapshotUpg
 
 // AllowNoMatch Specifies what to do when the request:
 //
-//   - Contains wildcard expressions and there are no jobs that match.
-//   - Contains the _all string or no identifiers and there are no matches.
-//   - Contains wildcard expressions and there are only partial matches.
+//  -  Contains wildcard expressions and there are no jobs that match.
+//  -  Contains the _all string or no identifiers and there are no matches.
+//  -  Contains wildcard expressions and there are only partial matches.
 //
 // The default value is true, which returns an empty jobs array when there are
 // no matches and the subset of results

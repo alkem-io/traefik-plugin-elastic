@@ -1,3 +1,5 @@
+// Package traefik_log_elasticsearch provides a Traefik middleware plugin
+// that logs HTTP request details to an Elasticsearch instance.
 package traefik_log_elasticsearch
 
 import (
@@ -67,7 +69,7 @@ type ElasticsearchLog struct {
 // handler to be executed after the middleware, and 'config' specifies the configuration settings.
 // The 'name' parameter is a string identifier for the middleware instance.
 // It returns the created middleware instance as an http.Handler and an error, if any.
-func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+func New(_ context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 	if len(config.ElasticsearchURL) == 0 {
 		return nil, errors.New("missing Elasticsearch URL")
 	}
@@ -167,20 +169,23 @@ func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if res.IsError() {
 		log.Printf("[%s] Error indexing document ID=%d", res.Status(), 1)
 		log.Printf("%d", res.StatusCode)
-	} else {
-		// Deserialize the response into a map.
-		var r map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-			log.Printf("Error parsing the response body: %s", err)
-		} else {
-			version, ok := r["_version"].(float64)
-			if !ok {
-				log.Printf("Error: expected '_version' to be a float64")
-				return
-			}
-			log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(version))
-		}
+		return
 	}
+
+	// Deserialize the response into a map.
+	var r map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		log.Printf("Error parsing the response body: %s", err)
+		return
+	}
+
+	version, ok := r["_version"].(float64)
+	if !ok {
+		log.Printf("Error: expected '_version' to be a float64")
+		return
+	}
+
+	log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(version))
 
 	e.Next.ServeHTTP(rw, req)
 }

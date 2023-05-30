@@ -1,5 +1,3 @@
-// Package traefik_log_elasticsearch provides a Traefik middleware plugin
-// that logs HTTP request details to an Elasticsearch instance.
 package traefik_log_elasticsearch_test
 
 import (
@@ -33,7 +31,7 @@ func TestLogElasticsearch(t *testing.T) {
 	}
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := w.Write([]byte("next handler")); err != nil {
+		if _, err = w.Write([]byte("next handler")); err != nil {
 			http.Error(w, fmt.Sprintf("Error writing response: %v", err), http.StatusInternalServerError)
 		}
 	})
@@ -62,7 +60,7 @@ func TestLogElasticsearch(t *testing.T) {
 
 	body, err := io.ReadAll(resp.Body)
 	defer func() {
-		err := resp.Body.Close()
+		err = resp.Body.Close()
 		if err != nil {
 			t.Fatalf("Error closing the response body: %s", err)
 		}
