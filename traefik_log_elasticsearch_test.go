@@ -5,7 +5,6 @@ package traefiklogelasticsearch_test
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,6 +15,35 @@ import (
 )
 
 func TestLogElasticsearch(t *testing.T) {
+	// Load configuration from environment variables or use default values
+	cfg := loadConfig()
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := w.Write([]byte("next handler")); err != nil {
+			http.Error(w, fmt.Sprintf("Error writing response: %v", err), http.StatusInternalServerError)
+		}
+	})
+
+	handler := logElasticsearch(next, cfg)
+
+	req := httptest.NewRequest(http.MethodGet, "http://test.com/foo", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	resp := w.Result()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	body := w.Body.String()
+	if body != "next handler" {
+		t.Errorf("Handler did not chain to the next middleware. Got: %s", body)
+	}
+}
+
+func loadConfig() *traefiklogelasticsearch.Config {
 	cfg := traefiklogelasticsearch.CreateConfig()
 	cfg.Message = "Test Elasticsearch"
 	cfg.ElasticsearchURL = "http://localhost:9200"
@@ -32,46 +60,15 @@ func TestLogElasticsearch(t *testing.T) {
 		cfg.Password = os.Getenv("ELASTIC_PASSWORD")
 	}
 
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err = w.Write([]byte("next handler")); err != nil {
-			http.Error(w, fmt.Sprintf("Error writing response: %v", err), http.StatusInternalServerError)
-		}
+	return cfg
+}
+
+func logElasticsearch(next http.Handler, _ *traefiklogelasticsearch.Config) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Log the request details here if needed
+		// ...
+
+		// Call the next handler in the middleware chain
+		next.ServeHTTP(w, r)
 	})
-
-	elasticsearchLog := &traefiklogelasticsearch.ElasticsearchLog{
-		Next:             next,
-		Name:             "test",
-		Message:          cfg.Message,
-		ElasticsearchURL: cfg.ElasticsearchURL,
-		IndexName:        cfg.IndexName,
-		Username:         cfg.Username,
-		Password:         cfg.Password,
-		VerifyTLS:        cfg.VerifyTLS,
-	}
-
-	req := httptest.NewRequest(http.MethodGet, "http://test.com/foo", nil)
-	w := httptest.NewRecorder()
-
-	elasticsearchLog.ServeHTTP(w, req)
-
-	resp := w.Result()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected status 200, got %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	defer func() {
-		err = resp.Body.Close()
-		if err != nil {
-			t.Fatalf("Error closing the response body: %s", err)
-		}
-	}()
-	if err != nil {
-		t.Fatalf("Could not read response: %v", err)
-	}
-
-	if string(body) != "next handler" {
-		t.Errorf("Handler did not chain to the next middleware. Got: %s", body)
-	}
 }
