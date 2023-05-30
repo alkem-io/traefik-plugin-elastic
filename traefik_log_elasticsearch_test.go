@@ -1,7 +1,7 @@
 package traefik_log_elasticsearch_test
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -45,7 +45,7 @@ func TestLogElasticsearch(t *testing.T) {
 		VerifyTLS:        cfg.VerifyTLS,
 	}
 
-	req := httptest.NewRequest("GET", "http://test.com/foo", nil)
+	req := httptest.NewRequest(http.MethodGet, "http://test.com/foo", nil)
 	w := httptest.NewRecorder()
 
 	elasticsearchLog.ServeHTTP(w, req)
@@ -56,7 +56,7 @@ func TestLogElasticsearch(t *testing.T) {
 		t.Fatalf("expected status 200, got %d", resp.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		t.Fatalf("Could not read response: %v", err)

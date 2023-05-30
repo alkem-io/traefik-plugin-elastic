@@ -15,6 +15,15 @@ import (
 	"github.com/google/uuid"
 )
 
+// Config is a structure that holds the configuration needed for the Elasticsearch plugin in Traefik.
+// It contains the following fields:
+// - ElasticsearchURL: This is the URL of the Elasticsearch instance that the plugin should interact with.
+// - IndexName: This is the name of the Elasticsearch index that the plugin should write logs to.
+// - Message: This is the default log message that will be used if no specific message is provided in the log entry.
+// - APIKey: If provided, this will be used for authentication with the Elasticsearch instance. This should be used if Username and Password are not provided.
+// - Username: This is the username to be used for authentication with the Elasticsearch instance. This is used in conjunction with Password and is an alternative to APIKey.
+// - Password: This is the password to be used for authentication with the Elasticsearch instance. This is used in conjunction with Username and is an alternative to APIKey.
+// - VerifyTLS: If true, the plugin will verify the TLS certificate of the Elasticsearch instance. It is recommended to always set this to true in production to prevent man-in-the-middle attacks.
 type Config struct {
 	ElasticsearchURL string
 	IndexName        string
@@ -29,6 +38,17 @@ func CreateConfig() *Config {
 	return &Config{}
 }
 
+// ElasticsearchLog is a middleware handler that logs HTTP requests to an Elasticsearch instance.
+// It contains the following fields:
+// - Next: The next handler to be called in the middleware chain. The ElasticsearchLog handler will call this after logging the request.
+// - Name: The name of the handler. This is mainly used for identification and debugging purposes.
+// - Message: The default message to be logged to Elasticsearch if no specific message is provided in the log entry.
+// - ElasticsearchURL: The URL of the Elasticsearch instance where the logs should be written to.
+// - IndexName: The name of the Elasticsearch index where the logs should be written to.
+// - APIKey: If provided, this will be used for authentication with the Elasticsearch instance. This should be used if Username and Password are not provided.
+// - Username: The username to be used for authentication with the Elasticsearch instance. This is used in conjunction with Password and is an alternative to APIKey.
+// - Password: The password to be used for authentication with the Elasticsearch instance. This is used in conjunction with Username and is an alternative to APIKey.
+// - VerifyTLS: If true, the middleware will verify the TLS certificate of the Elasticsearch instance. It is recommended to always set this to true in production to prevent man-in-the-middle attacks.
 type ElasticsearchLog struct {
 	Next             http.Handler
 	Name             string
@@ -127,7 +147,7 @@ func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 		Refresh:    "true",
 	}
 
-	res, err := esReq.Do(context.Background(), es)
+	res, err := esReq.Do(req.Context(), es)
 
 	if err != nil {
 		log.Fatalf("Error getting response: %s", err)

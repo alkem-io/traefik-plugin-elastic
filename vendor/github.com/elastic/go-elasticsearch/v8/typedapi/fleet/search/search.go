@@ -85,8 +85,6 @@ func NewSearchFunc(tp elastictransport.Interface) NewSearch {
 // Search API where the search will only be executed after specified checkpoints
 // are available due to a refresh. This API is designed for internal use by the
 // fleet server project.
-//
-//
 func New(tp elastictransport.Interface) *Search {
 	r := &Search{
 		transport: tp,
