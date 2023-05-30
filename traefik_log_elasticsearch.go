@@ -34,6 +34,8 @@ type Config struct {
 	VerifyTLS        bool
 }
 
+// CreateConfig returns a pointer to a Config struct with its fields initialized to zero values.
+// This is a convenient way to create a new Config instance.
 func CreateConfig() *Config {
 	return &Config{}
 }
@@ -61,6 +63,10 @@ type ElasticsearchLog struct {
 	VerifyTLS        bool
 }
 
+// New creates a new ElasticsearchLog middleware instance. The 'next' parameter specifies the
+// handler to be executed after the middleware, and 'config' specifies the configuration settings.
+// The 'name' parameter is a string identifier for the middleware instance.
+// It returns the created middleware instance as an http.Handler and an error, if any.
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 	if len(config.ElasticsearchURL) == 0 {
 		return nil, errors.New("missing Elasticsearch URL")
@@ -98,7 +104,6 @@ func convertToJSON(data map[string]interface{}) string {
 }
 
 func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-
 	var cfg elasticsearch.Config
 	if !e.VerifyTLS {
 		// Create a TLS config that skips certificate verification.
@@ -152,7 +157,12 @@ func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		log.Fatalf("Error getting response: %s", err)
 	}
-	defer res.Body.Close()
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			log.Fatalf("Error closing the response body: %s", err)
+		}
+	}()
 
 	if res.IsError() {
 		log.Printf("[%s] Error indexing document ID=%d", res.Status(), 1)
@@ -163,8 +173,12 @@ func (e *ElasticsearchLog) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 		if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 			log.Printf("Error parsing the response body: %s", err)
 		} else {
-			// Print the response status and indexed document version.
-			log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(r["_version"].(float64)))
+			version, ok := r["_version"].(float64)
+			if !ok {
+				log.Printf("Error: expected '_version' to be a float64")
+				return
+			}
+			log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(version))
 		}
 	}
 
