@@ -11,9 +11,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/joho/godotenv"
-
 	traefiklogelasticsearch "github.com/cmdbg/traefik-log-elasticsearch-plugin"
+	"github.com/joho/godotenv"
 )
 
 func TestLogElasticsearch(t *testing.T) {
