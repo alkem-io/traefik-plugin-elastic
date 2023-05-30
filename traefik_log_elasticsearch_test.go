@@ -2,7 +2,6 @@ package traefik_log_elasticsearch_test
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,18 +13,22 @@ import (
 )
 
 func TestLogElasticsearch(t *testing.T) {
-	err := godotenv.Load(".env") // load .env file
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
 
 	cfg := traefik_log_elasticsearch.CreateConfig()
 	cfg.Message = "Test Elasticsearch"
-	cfg.ElasticsearchURL = os.Getenv("ELASTICSEARCH_URL")
-	cfg.IndexName = os.Getenv("INDEX_NAME")
-	cfg.Username = os.Getenv("ELASTIC_USERNAME")
-	cfg.Password = os.Getenv("ELASTIC_PASSWORD")
-	cfg.VerifyTLS = true
+	cfg.ElasticsearchURL = "http://localhost:9200"
+	cfg.IndexName = "test-index"
+	cfg.Username = "elastic"
+	cfg.Password = "elastic"
+
+	err := godotenv.Load(".env")
+	if err == nil {
+		cfg.Message = "Test Elasticsearch"
+		cfg.ElasticsearchURL = os.Getenv("ELASTICSEARCH_URL")
+		cfg.IndexName = os.Getenv("INDEX_NAME")
+		cfg.Username = os.Getenv("ELASTIC_USERNAME")
+		cfg.Password = os.Getenv("ELASTIC_PASSWORD")
+	}
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("next handler"))
