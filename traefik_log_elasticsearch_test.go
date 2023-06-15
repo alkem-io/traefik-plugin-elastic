@@ -7,11 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	traefiklogelasticsearch "github.com/cmdbg/traefik-log-elasticsearch-plugin"
-	"github.com/joho/godotenv"
 )
 
 func TestLogElasticsearch(t *testing.T) {
@@ -50,15 +48,6 @@ func loadConfig() *traefiklogelasticsearch.Config {
 	cfg.IndexName = "test-index"
 	cfg.Username = "elastic"
 	cfg.Password = "elastic"
-
-	err := godotenv.Load(".env")
-	if err == nil {
-		cfg.Message = "Test Elasticsearch"
-		cfg.ElasticsearchURL = os.Getenv("ELASTICSEARCH_URL")
-		cfg.IndexName = os.Getenv("INDEX_NAME")
-		cfg.Username = os.Getenv("ELASTIC_USERNAME")
-		cfg.Password = os.Getenv("ELASTIC_PASSWORD")
-	}
 
 	return cfg
 }

@@ -1,39 +1,29 @@
 //go:build integration
 // +build integration
 
-package traefiklogelasticsearch_integration_test
+package traefiklogelasticsearch_test
 
 import (
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	traefiklogelasticsearch "github.com/cmdbg/traefik-log-elasticsearch-plugin"
-	"github.com/joho/godotenv"
 )
 
 func TestIntegrationLogElasticsearch(t *testing.T) {
 	cfg := traefiklogelasticsearch.CreateConfig()
 	cfg.Message = "Test Elasticsearch"
-	cfg.ElasticsearchURL = "http://localhost:9200"
+	cfg.ElasticsearchURL = "https://your.elastic.com"
 	cfg.IndexName = "test-index"
 	cfg.Username = "elastic"
-	cfg.Password = "elastic"
-
-	err := godotenv.Load(".env")
-	if err == nil {
-		cfg.Message = "Test Elasticsearch"
-		cfg.ElasticsearchURL = os.Getenv("ELASTICSEARCH_URL")
-		cfg.IndexName = os.Getenv("INDEX_NAME")
-		cfg.Username = os.Getenv("ELASTIC_USERNAME")
-		cfg.Password = os.Getenv("ELASTIC_PASSWORD")
-	}
+	cfg.Password = "ff9fKJta3Zb30E8re21I5043"
+	cfg.VerifyTLS = true
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err = w.Write([]byte("next handler")); err != nil {
+		if _, err := w.Write([]byte("next handler")); err != nil {
 			http.Error(w, fmt.Sprintf("Error writing response: %v", err), http.StatusInternalServerError)
 		}
 	})
