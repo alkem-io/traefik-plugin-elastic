@@ -2,7 +2,7 @@ displayName: Traefik plugin middleware for logging custom messages to a configur
 type: middleware
 iconPath: .assets/icon.png
 
-import: github.com/cmdbg/traefik-log-elasticsearch-plugin
+import: github.com/alkem-io/traefik-plugin-elastic
 
 summary: 'Log a message to elasticsearch'
 

@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	traefiklogelasticsearch "github.com/cmdbg/traefik-log-elasticsearch-plugin"
+	traefiklogelasticsearch "github.com/alkem-io/traefik-plugin-elastic"
 )
 
 func TestLogElasticsearch(t *testing.T) {

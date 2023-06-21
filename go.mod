@@ -1,4 +1,4 @@
-module github.com/cmdbg/traefik-log-elasticsearch-plugin
+module github.com/alkem-io/traefik-plugin-elastic
 
 go 1.19
 
