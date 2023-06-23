@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package traefiklogelasticsearch_test
+package traefik_plugin_elastic_test
 
 import (
 	"fmt"
@@ -10,17 +10,18 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	traefiklogelasticsearch "github.com/alkem-io/traefik-plugin-elastic"
+	traefik_plugin_elastic "github.com/alkem-io/traefik-plugin-elastic"
 )
 
 func TestIntegrationLogElasticsearch(t *testing.T) {
-	cfg := traefiklogelasticsearch.CreateConfig()
+	cfg := traefik_plugin_elastic.CreateConfig()
 	cfg.Message = "Test Elasticsearch"
-	cfg.ElasticsearchURL = "https://your.elastic.com"
+	cfg.ElasticsearchURL = "http://localhost:9200"
 	cfg.IndexName = "test-index"
 	cfg.Username = "elastic"
-	cfg.Password = "ff9fKJta3Zb30E8re21I5043"
-	cfg.VerifyTLS = true
+	cfg.Password = "elastic_user_password"
+	cfg.APIKey = "api_key"
+	cfg.VerifyTLS = false
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := w.Write([]byte("next handler")); err != nil {
@@ -28,7 +29,7 @@ func TestIntegrationLogElasticsearch(t *testing.T) {
 		}
 	})
 
-	elasticsearchLog := &traefiklogelasticsearch.ElasticsearchLog{
+	elasticsearchLog := &traefik_plugin_elastic.ElasticsearchLog{
 		Next:             next,
 		Name:             "test",
 		Message:          cfg.Message,

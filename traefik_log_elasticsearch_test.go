@@ -1,7 +1,7 @@
 //go:build !generated
 // +build !generated
 
-package traefiklogelasticsearch_test
+package traefik_plugin_elastic_test
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	traefiklogelasticsearch "github.com/alkem-io/traefik-plugin-elastic"
+	traefik_plugin_elastic "github.com/alkem-io/traefik-plugin-elastic"
 )
 
 func TestLogElasticsearch(t *testing.T) {
@@ -41,8 +41,8 @@ func TestLogElasticsearch(t *testing.T) {
 	}
 }
 
-func loadConfig() *traefiklogelasticsearch.Config {
-	cfg := traefiklogelasticsearch.CreateConfig()
+func loadConfig() *traefik_plugin_elastic.Config {
+	cfg := traefik_plugin_elastic.CreateConfig()
 	cfg.Message = "Test Elasticsearch"
 	cfg.ElasticsearchURL = "http://localhost:9200"
 	cfg.IndexName = "test-index"
@@ -52,7 +52,7 @@ func loadConfig() *traefiklogelasticsearch.Config {
 	return cfg
 }
 
-func logElasticsearch(next http.Handler, _ *traefiklogelasticsearch.Config) http.Handler {
+func logElasticsearch(next http.Handler, _ *traefik_plugin_elastic.Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Log the request details here if needed
 		// ...

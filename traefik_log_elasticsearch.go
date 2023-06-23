@@ -1,9 +1,9 @@
 //go:build !generated
 // +build !generated
 
-// Package traefiklogelasticsearch provides a Traefik middleware plugin
+// Package traefik_plugin_elastic provides a Traefik middleware plugin
 // that logs HTTP request details to an Elasticsearch instance.
-package traefiklogelasticsearch
+package traefik_plugin_elastic
 
 import (
 	"context"
