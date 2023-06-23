@@ -88,6 +88,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		IndexName:        config.IndexName,
 		Next:             next,
 		Name:             name,
+		Message:          config.Message,
 		Username:         config.Username,
 		Password:         config.Password,
 		APIKey:           config.APIKey,
